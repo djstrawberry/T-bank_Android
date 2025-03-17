@@ -71,10 +71,10 @@ class Disk(
 
 class Library {
     val libraryItems = listOf(
-        Book(1, "Солярис", true, 288, "Станислав Лем"),
-        Book(2, "Дюна", false, 1504, "Фрэнк Герберт"),
-        Newspaper(3, "Непоседа", false, 777),
-        Disk(4, "Артур и минипуты", true, "DVD"),
+        Book(23423, "Солярис", true, 288, "Станислав Лем"),
+        Book(456, "Дюна", false, 1504, "Фрэнк Герберт"),
+        Newspaper(12, "The New York Times", false, 777),
+        Disk(568, "Война миров", true, "DVD"),
         Disk(5, "Ария", true, "CD")
     )
 
@@ -90,13 +90,15 @@ class Library {
             println("${i++}. ${item.getShortInfo()}")
         }
 
-        println("Выберите объект по номеру:")
+        println("Выберите объект по номеру или введите 0 для возвращения назад:")
         val selectedIndex = readlnOrNull()?.toIntOrNull() ?: -1
 
-        if ((selectedIndex - 1) !in neededItems.indices) {
+        if ((selectedIndex - 1) !in neededItems.indices && selectedIndex != 0) {
             println("Неверный выбор.")
             return
         }
+        if (selectedIndex == 0)
+            return
 
         val selectedItem = neededItems[selectedIndex - 1]
         handleAction(selectedItem)
