@@ -2,18 +2,22 @@ package com.example.myapplication
 
 fun main() {
     val library = Library()
-    while (true) {
+    val manager = Manager()
+    var checkExit = true
+    while (checkExit) {
         println("Выберите действие:")
         println("1. Показать книги")
         println("2. Показать газеты")
         println("3. Показать диски")
+        println("4. Купить объект")
         println("0. Выход")
         library.run {
             when (readlnOrNull()?.toIntOrNull()) {
                 1 -> showItems("Book")
                 2 -> showItems("Newspaper")
                 3 -> showItems("Disk")
-                0 -> return
+                4 -> manager.runManager()
+                0 -> checkExit = false
                 else -> println("Неправильный выбор. Попробуйте еще раз.")
             }
         }
@@ -39,8 +43,8 @@ class Book(
     id: Int,
     name: String,
     isAvailable: Boolean,
-    val pages: Int,
-    val author: String
+    private val pages: Int,
+    private val author: String
 ) : LibraryItem(id, name, isAvailable) {
     override fun getDetailedInfo(): String {
         return "книга: $name ($pages стр.) автора: $author с id: $id доступна: ${if (isAvailable) "Да" else "Нет"}"
@@ -50,11 +54,12 @@ class Book(
 class Newspaper(
     id: Int,
     name: String,
+    private val month: String,
     isAvailable: Boolean,
-    val issueNumber: Int
+    private val issueNumber: Int
 ) : LibraryItem(id, name, isAvailable) {
     override fun getDetailedInfo(): String {
-        return "выпуск: $issueNumber газеты $name с id: $id доступен: ${if (isAvailable) "Да" else "Нет"}"
+        return "выпуск: $issueNumber газеты $name месяц выпуска: $month с id: $id доступен: ${if (isAvailable) "Да" else "Нет"}"
     }
 }
 
@@ -62,24 +67,25 @@ class Disk(
     id: Int,
     name: String,
     isAvailable: Boolean,
-    val type: String
+    private val type: String
 ) : LibraryItem(id, name, isAvailable) {
     override fun getDetailedInfo(): String {
         return "$type $name доступен: ${if (isAvailable) "Да" else "Нет"}"
     }
 }
 
-class Library {
+ // сама библиотека
+ open class Library {
     val libraryItems = listOf(
         Book(23423, "Солярис", true, 288, "Станислав Лем"),
         Book(456, "Дюна", false, 1504, "Фрэнк Герберт"),
-        Newspaper(12, "The New York Times", false, 777),
+        Newspaper(12, "The New York Times", "Декабрь",false, 777),
         Disk(568, "Война миров", true, "DVD"),
         Disk(5, "Ария", true, "CD")
     )
 
     fun showItems(whatIsIt: String) {
-        var i: Int = 1
+        var counterOfNeeded: Int = 1
         val neededItems = when (whatIsIt) {
             "Book" -> libraryItems.filterIsInstance<Book>()
             "Newspaper" -> libraryItems.filterIsInstance<Newspaper>()
@@ -87,7 +93,7 @@ class Library {
         }
 
         neededItems.forEach { item ->
-            println("${i++}. ${item.getShortInfo()}")
+            println("${counterOfNeeded++}. ${item.getShortInfo()}")
         }
 
         println("Выберите объект по номеру или введите 0 для возвращения назад:")
@@ -105,12 +111,15 @@ class Library {
     }
 
     fun handleAction(item: LibraryItem) {
-        while (true) {
+        val digitizationOffice = DigitizationOffice()
+        var checkExit = true
+        while (checkExit) {
             println("Выберите действие:")
             println("1. Взять домой")
             println("2. Читать в читальном зале")
             println("3. Показать подробную информацию")
             println("4. Вернуть")
+            println("5. Оцифровать")
             println("0. Назад")
 
             when (readlnOrNull()?.toIntOrNull()) {
@@ -118,13 +127,14 @@ class Library {
                 2 -> readInLibrary(item)
                 3 -> println(item.getDetailedInfo())
                 4 -> returnItem(item)
-                0 -> return
+                5 -> digitizationOffice.digitize(item)
+                0 -> checkExit = false
                 else -> println("Неверный ввод. Попробуйте снова.")
             }
         }
     }
 
-    fun takeHome(item: LibraryItem) {
+    private fun takeHome(item: LibraryItem) {
         when (item) {
             is Book, is Disk -> {
                 if (item.isAvailable) {
@@ -138,7 +148,7 @@ class Library {
         }
     }
 
-    fun readInLibrary(item: LibraryItem) {
+    private fun readInLibrary(item: LibraryItem) {
         when (item) {
             is Book, is Newspaper -> {
                 if (item.isAvailable) {
@@ -152,7 +162,7 @@ class Library {
         }
     }
 
-    fun returnItem(item: LibraryItem) {
+    private fun returnItem(item: LibraryItem) {
         if (!item.isAvailable) {
             item.isAvailable = true
             println("Предмет с id ${item.id} вернули.")
@@ -161,3 +171,73 @@ class Library {
         }
     }
 }
+
+// магазин с менеджером
+interface Store<T: LibraryItem> {
+    fun sell(): T
+}
+
+class BookStore: Store<Book> {
+    override fun sell(): Book {
+        return Book(666, "Очень интересная книга", true, 1000, "Хороший автор")
+    }
+}
+
+class NewspaperStore: Store<Newspaper> {
+    override fun sell(): Newspaper {
+        return Newspaper(666, "Очень интересная газета", "Май", true, 111)
+    }
+}
+
+class DiskStore: Store<Disk> {
+    override fun sell(): Disk {
+        return Disk(666, "Очень интересный диск", true, "CD")
+    }
+}
+
+class Manager {
+    fun <T: LibraryItem> buy(store: Store<T>): T {
+        return store.sell()
+    }
+
+    fun runManager() {
+        println("Выберите тип объекта для покупки:")
+        println("1. Книга")
+        println("2. Газета")
+        println("3. Диск")
+
+        when (readlnOrNull()?.toIntOrNull()) {
+            1 -> {
+                val newBook = buy(BookStore())
+                println("Куплена книга: ${newBook.getDetailedInfo()}")
+            }
+
+            2 -> {
+                val newNewspaper = buy(NewspaperStore())
+                println("Куплена газета: ${newNewspaper.getDetailedInfo()}")
+            }
+
+            3 -> {
+                val newDisk = buy(DiskStore())
+                println("Куплен диск: ${newDisk.getDetailedInfo()}")
+            }
+
+            else -> println("Неправильный выбор. Попробуйте еще раз.")
+        }
+    }
+}
+
+// кабинет оцифровки
+class DigitizationOffice {
+    fun digitize (item: LibraryItem): Disk {
+        println("Предмет с id ${item.id} оцифрован.")
+        return Disk(item.id, "Оцифрованный предмет: ${item.name}", true, "CD")
+    }
+}
+
+// inline функция с refied
+inline fun <reified T> filterByType(items: List<LibraryItem>): List<T> {
+    return items.filterIsInstance<T>()
+}
+
+// я так и не поняла что с ней нужно в итоге сделать, в задании написано просто написать, поэтому я и написала:(
