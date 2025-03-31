@@ -31,10 +31,6 @@ class LibraryAdapter(val items: List<LibraryItem>) :
             }
             iconImageView.setImageResource(icon)
 
-            // val alpha = if (item.isAvailable) 1f else 0.3f
-            // nameTextView.alpha = alpha
-            // idTextView.alpha = alpha
-            // iconImageView.alpha = alpha
             cardView.cardElevation = if (item.isAvailable) 10f else 1f
 
             itemView.setOnClickListener {
