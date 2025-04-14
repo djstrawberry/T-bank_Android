@@ -1,36 +1,48 @@
 package com.example.myapplication
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-
-    private val binding by lazy {
-        ActivityMainBinding.inflate(layoutInflater)
-    }
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var adapter: LibraryAdapter
+    private val library = Library.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        with(binding.recyclerView) {
-            val library = Library()
-            val adapter = LibraryAdapter(library.libraryItems)
-            this.adapter = adapter
+        adapter = LibraryAdapter(library.libraryItems)
+        binding.recyclerView.adapter = adapter
 
-            adapter.onItemClick = { item ->
-
-                Toast.makeText(
-                    this@MainActivity,
-                    "Элемент с id ${item.id}",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                item.isAvailable = !item.isAvailable
-                adapter.notifyItemChanged(library.libraryItems.indexOf(item))
+        adapter.onItemClick = { item ->
+            val intent = Intent(this, ItemActivity::class.java).apply {
+                putExtra("ITEM_ID", item.id)
+                putExtra("ITEM_TYPE", item.javaClass.simpleName)
             }
+            startActivity(intent)
         }
+
+        binding.fab.setOnClickListener {
+            val intent = Intent(this, ItemActivity::class.java).apply {
+                putExtra("IS_EDIT_MODE", true)
+            }
+            startActivity(intent)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        adapter.notifyDataSetChanged()
     }
 }

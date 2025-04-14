@@ -1,7 +1,7 @@
 package com.example.myapplication
 
 fun main() {
-    val library = Library()
+    val library = Library.getInstance()
     val manager = Manager()
     var checkExit = true
     while (checkExit) {
@@ -43,8 +43,8 @@ class Book(
     id: Int,
     name: String,
     isAvailable: Boolean,
-    private val pages: Int,
-    private val author: String
+    val pages: Int,
+    val author: String
 ) : LibraryItem(id, name, isAvailable) {
     override fun getDetailedInfo(): String {
         return "книга: $name ($pages стр.) автора: $author с id: $id доступна: ${if (isAvailable) "Да" else "Нет"}"
@@ -54,9 +54,9 @@ class Book(
 class Newspaper(
     id: Int,
     name: String,
-    private val month: String,
+    val month: String,
     isAvailable: Boolean,
-    private val issueNumber: Int
+    val issueNumber: Int
 ) : LibraryItem(id, name, isAvailable) {
     override fun getDetailedInfo(): String {
         return "выпуск: $issueNumber газеты $name месяц выпуска: $month с id: $id доступен: ${if (isAvailable) "Да" else "Нет"}"
@@ -67,7 +67,7 @@ class Disk(
     id: Int,
     name: String,
     isAvailable: Boolean,
-    private val type: String
+    val type: String
 ) : LibraryItem(id, name, isAvailable) {
     override fun getDetailedInfo(): String {
         return "$type $name доступен: ${if (isAvailable) "Да" else "Нет"}"
@@ -75,8 +75,8 @@ class Disk(
 }
 
  // сама библиотека
- open class Library {
-    val libraryItems = listOf(
+class Library {
+    val libraryItems = mutableListOf(
         Book(23423, "Солярис", true, 288, "Станислав Лем"),
         Book(456, "Дюна", false, 1504, "Фрэнк Герберт"),
         Newspaper(12, "The New York Times", "Декабрь",false, 777),
@@ -84,8 +84,19 @@ class Disk(
         Disk(5, "Ария", true, "CD")
     )
 
+     companion object {
+         private var instance: Library? = null
+
+         fun getInstance(): Library {
+             if (instance == null) {
+                 instance = Library()
+             }
+             return instance!!
+         }
+     }
+
     fun showItems(whatIsIt: String) {
-        var counterOfNeeded: Int = 1
+        var counterOfNeeded = 1
         val neededItems = when (whatIsIt) {
             "Book" -> libraryItems.filterIsInstance<Book>()
             "Newspaper" -> libraryItems.filterIsInstance<Newspaper>()
@@ -110,7 +121,7 @@ class Disk(
         handleAction(selectedItem)
     }
 
-    fun handleAction(item: LibraryItem) {
+    private fun handleAction(item: LibraryItem) {
         val digitizationOffice = DigitizationOffice()
         var checkExit = true
         while (checkExit) {
