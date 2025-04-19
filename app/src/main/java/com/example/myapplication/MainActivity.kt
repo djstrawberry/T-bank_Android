@@ -61,12 +61,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showCreateFragment() {
-        binding.fragmentContainerView2.visibility = View.VISIBLE
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragment_container_view2, ItemFragment.newInstance(isEditMode = true))
-            .addToBackStack(null)
-            .commit()
+        if (isLandscape) {
+            binding.fragmentContainerView2.visibility = View.VISIBLE
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view2,
+                    ItemFragment.newInstance(true))
+                .commit()
+        } else {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view1,
+                    ItemFragment.newInstance(true))
+                .addToBackStack(null)
+                .commit()
+        }
+    }
+
+    fun clearDetailFragment() {
+        if (isLandscape) {
+            binding.fragmentContainerView2.visibility = View.GONE
+            supportFragmentManager.beginTransaction()
+                .remove(supportFragmentManager.findFragmentById(R.id.fragment_container_view2)!!)
+                .commit()
+        }
     }
 
     private fun showLibraryFragment() {
@@ -80,9 +96,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (binding.fragmentContainerView2.visibility == View.VISIBLE) {
-            binding.fragmentContainerView2.visibility = View.GONE
-        }
+        if (isLandscape && binding.fragmentContainerView2.visibility == View.VISIBLE) {
+            clearDetailFragment()
+        } else {
             super.onBackPressed()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        val newOrientation = newConfig.orientation
+        if (newOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            isLandscape = true
+            if (currentItemId != -1) {
+                showItemFragment(currentItemId, currentItemType)
+            }
+        } else {
+            isLandscape = false
+            if (supportFragmentManager.findFragmentById(R.id.fragment_container_view2) != null) {
+                val detailFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view2)!!
+                supportFragmentManager.beginTransaction()
+                    .remove(detailFragment)
+                    .replace(R.id.fragment_container_view1, detailFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
+        }
     }
 }

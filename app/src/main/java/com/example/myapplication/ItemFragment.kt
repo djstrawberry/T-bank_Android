@@ -38,11 +38,14 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
 
         binding.btnSave.setOnClickListener {
             if (saveItem()) {
-                parentFragmentManager.setFragmentResult(
-                    "SAVE_RESULT",
-                    bundleOf("RESULT" to Activity.RESULT_OK)
-                )
-                requireActivity().onBackPressed()
+//                parentFragmentManager.setFragmentResult(
+//                    "SAVE_RESULT",
+//                    bundleOf("RESULT" to Activity.RESULT_OK)
+//                )
+//                requireActivity().onBackPressed()
+//                if (saveItem()) {
+                    (activity as? MainActivity)?.clearDetailFragment()
+//                }
             }
         }
     }
