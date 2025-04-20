@@ -1,10 +1,8 @@
 package com.example.myapplication
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import com.example.myapplication.databinding.FragmentItemBinding
 
@@ -22,11 +20,12 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
             isEditMode = it.getBoolean("IS_EDIT_MODE", false)
         }
         library = Library.getInstance()
-        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentItemBinding.bind(view)
+
         if (isEditMode) {
             showTypeSelection()
             setupTypeSelectionButtons()
@@ -38,14 +37,18 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
 
         binding.btnSave.setOnClickListener {
             if (saveItem()) {
-//                parentFragmentManager.setFragmentResult(
-//                    "SAVE_RESULT",
-//                    bundleOf("RESULT" to Activity.RESULT_OK)
-//                )
-//                requireActivity().onBackPressed()
-//                if (saveItem()) {
-                    (activity as? MainActivity)?.clearDetailFragment()
-//                }
+                if (isEditMode) {
+                    (activity as? MainActivity)?.let { activity ->
+                        activity.clearDetailFragment()
+                        if (!activity.isLandscape) {
+                            val libraryFragment = activity.supportFragmentManager
+                                .findFragmentById(R.id.fragment_container_view1) as? LibraryFragment
+                            libraryFragment?.scrollToLastItem()
+                        }
+                    }
+                } else {
+                    requireActivity().onBackPressed()
+                }
             }
         }
     }
@@ -232,16 +235,16 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
         return true
     }
     companion object {
-            fun newInstance(
-                isEditMode: Boolean = false,
-                itemId: Int = -1,
-                itemType: String = ""
-            ) = ItemFragment().apply {
-                arguments = Bundle().apply {
-                    putBoolean("IS_EDIT_MODE", isEditMode)
-                    putInt("ITEM_ID", itemId)
-                    putString("ITEM_TYPE", itemType)
-                }
+        fun newInstance(
+            isEditMode: Boolean = false,
+            itemId: Int = -1,
+            itemType: String = ""
+        ) = ItemFragment().apply {
+            arguments = Bundle().apply {
+                putBoolean("IS_EDIT_MODE", isEditMode)
+                putInt("ITEM_ID", itemId)
+                putString("ITEM_TYPE", itemType)
             }
         }
     }
+}

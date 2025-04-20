@@ -8,9 +8,10 @@ import com.example.myapplication.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private var isLandscape: Boolean = false
+    var isLandscape: Boolean = false
     private var currentItemId: Int = -1
     private var currentItemType: String = ""
+    private var isCreatingNewItem: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,107 +21,104 @@ class MainActivity : AppCompatActivity() {
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         if (savedInstanceState == null) {
-            showLibraryFragment()
+            setupInitialFragments()
         } else {
-            currentItemId = savedInstanceState.getInt("currentItemId", -1)
-            currentItemType = savedInstanceState.getString("currentItemType", "")
+            restoreState(savedInstanceState)
         }
     }
 
-    fun showItemFragment(itemId: Int, itemType: String) {
+    private fun setupInitialFragments() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container_view1, LibraryFragment())
+            .commit()
 
-        currentItemId = itemId
-        currentItemType = itemType
+        if (isLandscape && (currentItemId != -1 || isCreatingNewItem)) {
+            showDetailFragment()
+        }
+    }
+
+    private fun showDetailFragment() {
+        if (isCreatingNewItem) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view2, ItemFragment.newInstance(true))
+                .commit()
+        } else {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view2,
+                    ItemFragment.newInstance(false, currentItemId, currentItemType))
+                .commit()
+        }
+        binding.fragmentContainerView2.visibility = View.VISIBLE
+    }
+
+    fun showItemDetails(itemId: Int, itemType: String) {
+        if (isLandscape) {
+            clearDetailFragment()
+
+            supportFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragment_container_view2,
+                    ItemFragment.newInstance(false, itemId, itemType))
+                .commitNow()
+
+            binding.fragmentContainerView2.visibility = View.VISIBLE
+
+        } else {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view1,
+                    ItemFragment.newInstance(false, itemId, itemType))
+                .addToBackStack("details")
+                .commit()
+        }
+    }
+
+    fun showCreateItem() {
+        isCreatingNewItem = true
+        currentItemId = -1
+        currentItemType = ""
 
         if (isLandscape) {
-            binding.fragmentContainerView2.visibility = View.VISIBLE
-            supportFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.fragment_container_view2,
-                    ItemFragment.newInstance(false, itemId, itemType)
-                )
-                .commit()
+            showDetailFragment()
         } else {
-            supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.fragment_container_view1, ItemFragment.newInstance(
-                    isEditMode = false,
-                    itemId = itemId,
-                    itemType = itemType
-                ))
-                .addToBackStack(null)
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view1, ItemFragment.newInstance(true))
+                .addToBackStack("create")
                 .commit()
         }
     }
+
+    private fun restoreState(savedInstanceState: Bundle) {
+        currentItemId = savedInstanceState.getInt("currentItemId", -1)
+        currentItemType = savedInstanceState.getString("currentItemType", "")
+        isCreatingNewItem = savedInstanceState.getBoolean("isCreatingNewItem", false)
+    }
+
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("currentItemId", currentItemId)
         outState.putString("currentItemType", currentItemType)
-    }
-
-    fun showCreateFragment() {
-        if (isLandscape) {
-            binding.fragmentContainerView2.visibility = View.VISIBLE
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view2,
-                    ItemFragment.newInstance(true))
-                .commit()
-        } else {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view1,
-                    ItemFragment.newInstance(true))
-                .addToBackStack(null)
-                .commit()
-        }
+        outState.putBoolean("isCreatingNewItem", isCreatingNewItem)
     }
 
     fun clearDetailFragment() {
-        if (isLandscape) {
-            binding.fragmentContainerView2.visibility = View.GONE
+        val existingFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view2)
+        if (existingFragment != null) {
             supportFragmentManager.beginTransaction()
-                .remove(supportFragmentManager.findFragmentById(R.id.fragment_container_view2)!!)
-                .commit()
+                .remove(existingFragment)
+                .commitNow()
         }
-    }
-
-    private fun showLibraryFragment() {
-        val fragment = LibraryFragment()
-
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragment_container_view1, fragment)
-            .commit()
-        println("MAIN_DEBUG: Fragment transaction committed")
+        binding.fragmentContainerView2.visibility = View.GONE
     }
 
     override fun onBackPressed() {
         if (isLandscape && binding.fragmentContainerView2.visibility == View.VISIBLE) {
             clearDetailFragment()
         } else {
-            super.onBackPressed()
-        }
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        val newOrientation = newConfig.orientation
-        if (newOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            isLandscape = true
-            if (currentItemId != -1) {
-                showItemFragment(currentItemId, currentItemType)
-            }
-        } else {
-            isLandscape = false
-            if (supportFragmentManager.findFragmentById(R.id.fragment_container_view2) != null) {
-                val detailFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view2)!!
-                supportFragmentManager.beginTransaction()
-                    .remove(detailFragment)
-                    .replace(R.id.fragment_container_view1, detailFragment)
-                    .addToBackStack(null)
-                    .commit()
+            if (supportFragmentManager.backStackEntryCount > 0) {
+                supportFragmentManager.popBackStack()
+            } else {
+                super.onBackPressed()
             }
         }
     }
