@@ -135,6 +135,7 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
             Toast.makeText(requireContext(), "Элемент не найден.", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
         }
+        binding.btnSave.visibility = View.GONE
     }
 
     private fun setupForCreate() {

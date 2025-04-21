@@ -34,9 +34,9 @@
     <TextView
         android:id="@+id/errorTextView"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:padding="16dp"
-        android:textColor="#DC143C"
+        android:textColor="#483D8B"
         android:gravity="center"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"

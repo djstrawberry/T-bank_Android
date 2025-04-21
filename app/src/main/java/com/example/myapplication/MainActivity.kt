@@ -118,7 +118,8 @@ class MainActivity : AppCompatActivity() {
             if (supportFragmentManager.backStackEntryCount > 0) {
                 supportFragmentManager.popBackStack()
             } else {
-                super.onBackPressed()
+                super.onBackPressed() // если честно я не поняла как это заменить, и обязательно ли это,
+                // если оно deprecated?
             }
         }
     }
