@@ -4,7 +4,11 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.databinding.FragmentItemBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ItemFragment : Fragment(R.layout.fragment_item) {
     private var _binding: FragmentItemBinding? = null
@@ -13,6 +17,7 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
     private var isEditMode: Boolean = false
     private var selectedType: String = "Book"
     private lateinit var library: Library
+    private val repository = LibraryRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -195,43 +200,83 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
             return false
         }
 
-        val newId = (library.libraryItems.maxOfOrNull { it.id } ?: 0) + 1
+        binding.btnSave.isEnabled = false
 
-        val newItem = when (selectedType) {
-            "Book" -> {
-                val author = binding.field1.text.toString().trim()
-                val pages = binding.field2.text.toString().toIntOrNull() ?: 0
-                if (author.isEmpty() || pages <= 0) {
-                    Toast.makeText(requireContext(), "Заполните все поля корректно.", Toast.LENGTH_SHORT).show()
-                    return false
+        lifecycleScope.launch {
+            try {
+                val newItem = when (selectedType) {
+                    "Book" -> {
+                        val author = binding.field1.text.toString().trim()
+                        val pages = binding.field2.text.toString().toIntOrNull() ?: 0
+                        if (author.isEmpty() || pages <= 0) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Заполните все поля корректно", Toast.LENGTH_SHORT).show()
+                                binding.btnSave.isEnabled = true
+                            }
+                            return@launch
+                        }
+                        Book((library.libraryItems.maxOfOrNull { it.id } ?: 0) + 1, name, true, pages, author)
+                    }
+                    "Newspaper" -> {
+                        val month = binding.field1.text.toString().trim()
+                        val issueNumber = binding.field2.text.toString().toIntOrNull() ?: 0
+                        if (month.isEmpty() || issueNumber <= 0) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Заполните все поля корректно", Toast.LENGTH_SHORT).show()
+                                binding.btnSave.isEnabled = true
+                            }
+                            return@launch
+                        }
+                        Newspaper((library.libraryItems.maxOfOrNull { it.id } ?: 0) + 1, name, month, true, issueNumber)
+                    }
+                    "Disk" -> {
+                        val type = binding.field1.text.toString().trim()
+                        if (type.isEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Введите тип диска", Toast.LENGTH_SHORT).show()
+                                binding.btnSave.isEnabled = true
+                            }
+                            return@launch
+                        }
+                        Disk((library.libraryItems.maxOfOrNull { it.id } ?: 0) + 1, name, true, type)
+                    }
+                    else -> {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "Неизвестный тип элемента", Toast.LENGTH_SHORT).show()
+                            binding.btnSave.isEnabled = true
+                        }
+                        return@launch
+                    }
                 }
-                Book(newId, name, true, pages, author)
-            }
-            "Newspaper" -> {
-                val month = binding.field1.text.toString().trim()
-                val issueNumber = binding.field2.text.toString().toIntOrNull() ?: 0
-                if (month.isEmpty() || issueNumber <= 0) {
-                    Toast.makeText(requireContext(), "Заполните все поля корректно.", Toast.LENGTH_SHORT).show()
-                    return false
+
+                val result = withContext(Dispatchers.IO) {
+                    repository.addItem(newItem)
                 }
-                Newspaper(newId, name, month, true, issueNumber)
-            }
-            "Disk" -> {
-                val type = binding.field1.text.toString().trim()
-                if (type.isEmpty()) {
-                    Toast.makeText(requireContext(), "Введите тип диска: ", Toast.LENGTH_SHORT).show()
-                    return false
+
+                withContext(Dispatchers.Main) {
+                    if (result.isSuccess) {
+                        Toast.makeText(requireContext(), "Элемент добавлен", Toast.LENGTH_SHORT).show()
+                        parentFragmentManager.popBackStack()
+                        } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Ошибка: ${result.exceptionOrNull()?.message ?: "неизвестная ошибка"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    binding.btnSave.isEnabled = true
                 }
-                Disk(newId, name, true, type)
-            }
-            else -> {
-                Toast.makeText(requireContext(), "Неизвестный тип элемента.", Toast.LENGTH_SHORT).show()
-                return false
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Ошибка: ${e.message ?: "неизвестная ошибка"}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    binding.btnSave.isEnabled = true
+                }
             }
         }
-
-        library.libraryItems.add(newItem)
-        Toast.makeText(requireContext(), "Элемент добавлен.", Toast.LENGTH_SHORT).show()
         return true
     }
     companion object {

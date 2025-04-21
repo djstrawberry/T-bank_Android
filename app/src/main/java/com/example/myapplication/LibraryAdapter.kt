@@ -29,7 +29,6 @@ class LibraryAdapter(private val items: List<LibraryItem>) :
                 cardView.cardElevation = if (item.isAvailable) 10f else 1f
 
                 itemView.setOnClickListener {
-                    println("DEBUG: Item clicked! ID: ${item.id}")
                     onItemClick?.invoke(item)
                 }
             }
