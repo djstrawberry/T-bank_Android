@@ -1,47 +1,47 @@
 package com.example.myapplication
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import android.widget.TextView
-import android.widget.ImageView
-import androidx.cardview.widget.CardView
+import com.example.myapplication.databinding.ItemLibraryBinding
 
-class LibraryAdapter(val items: List<LibraryItem>) :
+class LibraryAdapter(private val items: List<LibraryItem>) :
     RecyclerView.Adapter<LibraryAdapter.LibraryViewHolder>() {
 
     var onItemClick: ((LibraryItem) -> Unit)? = null
 
-    inner class LibraryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val nameTextView: TextView = itemView.findViewById(R.id.itemName)
-        private val idTextView: TextView = itemView.findViewById(R.id.itemId)
-        private val iconImageView: ImageView = itemView.findViewById(R.id.itemIcon)
-        private val cardView: CardView = itemView.findViewById(R.id.cardView)
+    inner class LibraryViewHolder(private val binding: ItemLibraryBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: LibraryItem) {
-            nameTextView.text = item.name
-            idTextView.text = "ID: ${item.id}"
+            with(binding) {
+                itemName.text = item.name
+                itemId.text = "ID: ${item.id}"
 
-            val icon = when (item) {
-                is Book -> R.drawable.ic_book
-                is Newspaper -> R.drawable.ic_newspaper
-                is Disk -> R.drawable.ic_disk
-                else -> R.drawable.ic_default
-            }
-            iconImageView.setImageResource(icon)
+                val icon = when (item) {
+                    is Book -> R.drawable.ic_book
+                    is Newspaper -> R.drawable.ic_newspaper
+                    is Disk -> R.drawable.ic_disk
+                    else -> R.drawable.ic_default
+                }
+                itemIcon.setImageResource(icon)
 
-            cardView.cardElevation = if (item.isAvailable) 10f else 1f
+                cardView.cardElevation = if (item.isAvailable) 10f else 1f
 
-            itemView.setOnClickListener {
-                onItemClick?.invoke(item)
+                itemView.setOnClickListener {
+                    onItemClick?.invoke(item)
+                }
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LibraryViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_library, parent, false)
-        return LibraryViewHolder(view)
+        val binding = ItemLibraryBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return LibraryViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: LibraryViewHolder, position: Int) {
