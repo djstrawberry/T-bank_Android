@@ -6,7 +6,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
 import com.example.myapplication.databinding.FragmentLibraryBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,19 +63,14 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
 
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
-                val visibleItemCount = layoutManager.childCount
-                val totalItemCount = layoutManager.itemCount
+                if (!isLoading && dy > 0) {
+                    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                    val visibleItemCount = layoutManager.childCount
+                    val totalItemCount = layoutManager.itemCount
+                    val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
 
-                if (dy > 0 && !isLoading) {
-                    if (firstVisibleItem + visibleItemCount >= totalItemCount - 10) {
-                        loadLibraryItems(repository, loadMore = true, isScrollingUp = false)
-                    }
-                }
-                else if (dy < 0 && !isLoading) {
-                    if (firstVisibleItem <= 10) {
-                        loadLibraryItems(repository, loadMore = true, isScrollingUp = true)
+                    if ((firstVisibleItem + visibleItemCount) >= totalItemCount - 5) {
+                        loadLibraryItems(repository, loadMore = true)
                     }
                 }
             }
@@ -117,7 +111,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         lifecycleScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) {
-                    repository.getLibraryItems(loadMore, isScrollingUp)
+                    repository.getLibraryItems(loadMore)
                 }
 
                 when {

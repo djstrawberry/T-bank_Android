@@ -1,9 +1,6 @@
 package com.example.myapplication
 
-import android.os.Build
 import androidx.room.withTransaction
-import com.google.android.gms.drive.query.SortOrder
-import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 class LibraryRepository(private val db: DatabaseLibrary) {
@@ -21,45 +18,25 @@ class LibraryRepository(private val db: DatabaseLibrary) {
     private var currentLimit = 30
     private var loadedItems = mutableListOf<LibraryItem>()
 
-    suspend fun initialize() {
-        currentOffset = 0
-        loadedItems.clear()
-    }
 
     suspend fun getLibraryItems(
-        loadMore: Boolean = false,
-        isScrollingUp: Boolean = false
+        loadMore: Boolean = false
     ): Result<List<LibraryItem>> {
         return try {
-            val items = if (loadMore) {
-                if (isScrollingUp) {
-                    val newOffset = maxOf(0, currentOffset - currentLimit/2)
-                    val count = currentOffset - newOffset
-                    currentOffset = newOffset
-                    getItemsFromDb(currentLimit/2, currentOffset).also {
-                        if (it.isNotEmpty() && loadedItems.size + it.size > currentLimit * 3) {
-                            loadedItems.subList(loadedItems.size - it.size, loadedItems.size).clear()
-                        }
-                    }
-                } else {
-                    val newOffset = currentOffset + loadedItems.size
-                    getItemsFromDb(currentLimit/2, newOffset).also {
-                        if (it.isNotEmpty() && loadedItems.size + it.size > currentLimit * 3) {
-                            loadedItems.subList(0, it.size).clear()
-                        }
-                        currentOffset = newOffset
-                    }
-                }
-            } else {
-                getItemsFromDb(currentLimit, currentOffset)
+            if (!loadMore) {
+                currentOffset = 0
+                loadedItems.clear()
             }
 
-            if (items.isNotEmpty()) {
-                if (loadMore && isScrollingUp) {
-                    loadedItems.addAll(0, items)
-                } else {
-                    loadedItems.addAll(items)
+            val newItems = getItemsFromDb(currentLimit, currentOffset)
+
+            if (loadMore) {
+                if (newItems.isNotEmpty()) {
+                    currentOffset += currentLimit
+                    loadedItems.addAll(newItems)
                 }
+            } else {
+                loadedItems = newItems.toMutableList()
             }
 
             Result.success(loadedItems.toList())
@@ -68,7 +45,7 @@ class LibraryRepository(private val db: DatabaseLibrary) {
         }
     }
 
-    suspend fun getNextAvailableId(): Int {
+    fun getNextAvailableId(): Int {
         val random = Random(System.currentTimeMillis())
         return random.nextInt(100000)
     }
@@ -121,7 +98,7 @@ class LibraryRepository(private val db: DatabaseLibrary) {
         }
     }
 
-    suspend fun setSortOrder(order: SortOrder) {
+    fun setSortOrder(order: SortOrder) {
         currentSortOrder = order
         currentOffset = 0
         loadedItems.clear()
