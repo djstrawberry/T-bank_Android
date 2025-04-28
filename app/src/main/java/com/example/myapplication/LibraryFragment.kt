@@ -5,9 +5,12 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.example.myapplication.databinding.FragmentLibraryBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -17,15 +20,22 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     private val binding get() = _binding!!
     private lateinit var adapter: LibraryAdapter
     private val library = Library.getInstance()
-    private val repository = LibraryRepository()
     private var job: Job? = null
+    private var isLoading = false
+    private var isFirstLoad = true
+    private var totalItems = 0
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLibraryBinding.bind(view)
 
-        setupRecyclerView()
-        loadLibraryItems()
+        val db = GetDb.getDatabase(requireContext())
+
+        val repository = LibraryRepository(db)
+
+        setupRecyclerView(repository)
+        setupSortingButtons(repository)
+        loadLibraryItems(repository, initialLoad = true)
 
         adapter.onItemClick = { item ->
             (activity as? MainActivity)?.showItemDetails(item.id, item::class.java.simpleName)
@@ -45,10 +55,101 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
     }
 
-    private fun setupRecyclerView() {
-        adapter = LibraryAdapter(library.libraryItems)
+    private fun setupRecyclerView(repository: LibraryRepository) {
+        adapter = LibraryAdapter(emptyList())
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+
+                if (dy > 0 && !isLoading) {
+                    if (firstVisibleItem + visibleItemCount >= totalItemCount - 10) {
+                        loadLibraryItems(repository, loadMore = true, isScrollingUp = false)
+                    }
+                }
+                else if (dy < 0 && !isLoading) {
+                    if (firstVisibleItem <= 10) {
+                        loadLibraryItems(repository, loadMore = true, isScrollingUp = true)
+                    }
+                }
+            }
+        })
+    }
+
+    private fun setupSortingButtons(repository: LibraryRepository) {
+        binding.sortByName.setOnClickListener {
+            lifecycleScope.launch {
+                repository.setSortOrder(LibraryRepository.SortOrder.BY_NAME)
+                loadLibraryItems(repository)
+            }
+        }
+
+        binding.sortByDate.setOnClickListener {
+            lifecycleScope.launch {
+                repository.setSortOrder(LibraryRepository.SortOrder.BY_DATE)
+                loadLibraryItems(repository)
+            }
+        }
+    }
+
+    private fun loadLibraryItems(
+        repository: LibraryRepository,
+        initialLoad: Boolean = false,
+        loadMore: Boolean = false,
+        isScrollingUp: Boolean = false
+    ) {
+        if (isLoading) return
+
+        isLoading = true
+        if (!loadMore) {
+            showShimmer()
+        } else {
+            binding.progressBar.visibility = View.VISIBLE
+        }
+
+        lifecycleScope.launch {
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    repository.getLibraryItems(loadMore, isScrollingUp)
+                }
+
+                when {
+                    result.isSuccess -> {
+                        val items = result.getOrNull() ?: emptyList()
+                        if (items.isEmpty() && !loadMore && !initialLoad) {
+                            binding.errorTextView.text = "Нет элементов для отображения"
+                            binding.errorTextView.visibility = View.VISIBLE
+                            binding.recyclerView.visibility = View.GONE
+                        } else {
+                            adapter.updateItems(items)
+                            binding.recyclerView.visibility = View.VISIBLE
+                            binding.errorTextView.visibility = View.GONE
+
+                            if (initialLoad) {
+                                delay(1000)
+                            }
+                        }
+                    }
+                    result.isFailure -> {
+                        binding.errorTextView.text = result.exceptionOrNull()?.message ?: "Ошибка загрузки"
+                        binding.errorTextView.visibility = View.VISIBLE
+                        binding.recyclerView.visibility = View.GONE
+                    }
+                }
+            } finally {
+                hideShimmer()
+                binding.progressBar.visibility = View.GONE
+                isLoading = false
+                isFirstLoad = false
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -58,6 +159,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     }
 
     private fun showShimmer() {
+        binding.shimmerViewContainer.bringToFront()
         binding.shimmerViewContainer.startShimmer()
         binding.shimmerViewContainer.visibility = View.VISIBLE
         binding.recyclerView.visibility = View.GONE
@@ -67,32 +169,5 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     private fun hideShimmer() {
         binding.shimmerViewContainer.stopShimmer()
         binding.shimmerViewContainer.visibility = View.GONE
-    }
-
-    private fun loadLibraryItems() {
-        showShimmer()
-
-        job = lifecycleScope.launch(Dispatchers.Main) {
-            val result = withContext(Dispatchers.IO) {
-                repository.getLibraryItems()
-            }
-
-            hideShimmer()
-
-                when {
-                    result.isSuccess ->  {
-                        val items = result.getOrNull() ?: emptyList()
-                        val currentOnItemClick = adapter.onItemClick
-                        adapter = LibraryAdapter(items)
-                        adapter.onItemClick = currentOnItemClick
-                        binding.recyclerView.adapter = adapter
-                        binding.recyclerView.visibility = View.VISIBLE
-                    }
-                    result.isFailure -> {
-                        binding.errorTextView.text = result.exceptionOrNull()?.message ?: "Данные не были загружены."
-                        binding.errorTextView.visibility = View.VISIBLE
-                }
-            }
-        }
     }
 }
