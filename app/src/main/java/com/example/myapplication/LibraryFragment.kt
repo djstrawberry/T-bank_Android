@@ -15,14 +15,16 @@ import kotlinx.coroutines.withContext
 
 class LibraryFragment : Fragment(R.layout.fragment_library) {
 
+    private companion object {
+        const val VISIBLE_ITEMS = 5
+    }
+
     private var _binding: FragmentLibraryBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: LibraryAdapter
-    private val library = Library.getInstance()
     private var job: Job? = null
     private var isLoading = false
     private var isFirstLoad = true
-    private var totalItems = 0
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -69,7 +71,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
                     val totalItemCount = layoutManager.itemCount
                     val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
 
-                    if ((firstVisibleItem + visibleItemCount) >= totalItemCount - 5) {
+                    if ((firstVisibleItem + visibleItemCount) >= totalItemCount - VISIBLE_ITEMS) {
                         loadLibraryItems(repository, loadMore = true)
                     }
                 }
@@ -97,7 +99,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         repository: LibraryRepository,
         initialLoad: Boolean = false,
         loadMore: Boolean = false,
-        isScrollingUp: Boolean = false
     ) {
         if (isLoading) return
 
