@@ -5,8 +5,13 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.databinding.ItemLibraryBinding
 
-class LibraryAdapter(private val items: List<LibraryItem>) :
+class LibraryAdapter(private var items: List<LibraryItem>) :
     RecyclerView.Adapter<LibraryAdapter.LibraryViewHolder>() {
+
+    fun updateItems(newItems: List<LibraryItem>) {
+        items = newItems
+        notifyDataSetChanged()
+    }
 
     var onItemClick: ((LibraryItem) -> Unit)? = null
 

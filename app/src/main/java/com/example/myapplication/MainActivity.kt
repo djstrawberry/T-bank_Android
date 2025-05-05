@@ -12,11 +12,15 @@ class MainActivity : AppCompatActivity() {
     private var currentItemId: Int = -1
     private var currentItemType: String = ""
     private var isCreatingNewItem: Boolean = false
+    private lateinit var repository: LibraryRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val db = GetDb.getDatabase(this)
+        repository = LibraryRepository(db)
 
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -24,6 +28,9 @@ class MainActivity : AppCompatActivity() {
             setupInitialFragments()
         } else {
             restoreState(savedInstanceState)
+            if (isLandscape && (currentItemId != -1 || isCreatingNewItem)) {
+                showDetailFragment()
+            }
         }
     }
 
@@ -40,48 +47,63 @@ class MainActivity : AppCompatActivity() {
     private fun showDetailFragment() {
         if (isCreatingNewItem) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view2, ItemFragment.newInstance(true))
+                .replace(R.id.fragment_container_view2, ItemFragment.newInstance(true, repository = repository))
                 .commit()
         } else {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container_view2,
-                    ItemFragment.newInstance(false, currentItemId, currentItemType))
+                    ItemFragment.newInstance(false, currentItemId, currentItemType, repository = repository))
                 .commit()
         }
         binding.fragmentContainerView2.visibility = View.VISIBLE
     }
 
     fun showItemDetails(itemId: Int, itemType: String) {
+
+        currentItemId = itemId
+        currentItemType = itemType
+        isCreatingNewItem = false
+
+        val fragment = ItemFragment.newInstance(
+            isEditMode = false,
+            itemId = itemId,
+            itemType = itemType,
+            repository = repository
+        )
+
         if (isLandscape) {
-            clearDetailFragment()
-
             supportFragmentManager.beginTransaction()
-                .setReorderingAllowed(true)
-                .replace(R.id.fragment_container_view2,
-                    ItemFragment.newInstance(false, itemId, itemType))
-                .commitNow()
-
+                .replace(R.id.fragment_container_view2, fragment)
+                .commit()
             binding.fragmentContainerView2.visibility = View.VISIBLE
-
         } else {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view1,
-                    ItemFragment.newInstance(false, itemId, itemType))
+                .replace(R.id.fragment_container_view1, fragment)
                 .addToBackStack("details")
                 .commit()
         }
     }
 
     fun showCreateItem() {
-        isCreatingNewItem = true
         currentItemId = -1
         currentItemType = ""
+        isCreatingNewItem = true
+
+        val fragment = ItemFragment.newInstance(
+            isEditMode = true,
+            itemId = -1,
+            itemType = "",
+            repository = repository
+        )
 
         if (isLandscape) {
-            showDetailFragment()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view2, fragment)
+                .commit()
+            binding.fragmentContainerView2.visibility = View.VISIBLE
         } else {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view1, ItemFragment.newInstance(true))
+                .replace(R.id.fragment_container_view1, fragment)
                 .addToBackStack("create")
                 .commit()
         }
