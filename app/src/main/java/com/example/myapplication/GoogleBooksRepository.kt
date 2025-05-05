@@ -25,7 +25,7 @@ class GoogleBooksRepository(context: Context) {
             val response = withContext(Dispatchers.IO) { api.getBooks(query) }
 
             if (response.isSuccessful) {
-                response.body()?.books?.map { it.toBook() } ?: emptyList()
+                response.body()?.items?.map { it.toBook() } ?: emptyList()
             } else {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Ошибка API: ${response.code()}", Toast.LENGTH_SHORT).show()

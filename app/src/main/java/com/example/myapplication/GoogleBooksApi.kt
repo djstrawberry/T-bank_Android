@@ -13,5 +13,5 @@ interface GoogleBooksApi {
         maxResults: Int = 20,
         @Query("fields")
         fields: String = "items(id,volumeInfo(title,authors,pageCount,industryIdentifiers))"
-    ): Response<GoogleBooks>
+    ): Response<GoogleBooksResponse>
 }

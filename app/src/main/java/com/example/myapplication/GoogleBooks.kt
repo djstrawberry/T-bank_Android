@@ -1,27 +1,26 @@
 package com.example.myapplication
 
-data class GoogleBooks (
-    val books: List<ReceivedBook>?
+data class GoogleBooksResponse (
+    val items: List<ReceivedBook>?
 )
 
 data class ReceivedBook (
     val id: String?,
-    val info: Info?
+    val volumeInfo: VolumeInfo?
 ) {
     fun toBook(): Book {
-        val identifier = info?.industryIdentifiers?.firstOrNull { it.type == "ISBN_10" }
-
+        val identifier = volumeInfo?.industryIdentifiers?.firstOrNull { it.type == "ISBN_10" }
         return Book(
             id = identifier.hashCode(),
-            name = info?.title ?: "Без названия",
+            name = volumeInfo?.title ?: "Без названия",
             isAvailable = true,
-            pages = info?.pageCount ?: 0,
-            author = info?.authors?.joinToString(", ") ?: "Неизвестный автор"
+            pages = volumeInfo?.pageCount ?: 0,
+            author = volumeInfo?.authors?.joinToString(", ") ?: "Неизвестный автор"
         )
     }
 }
 
-data class Info(
+data class VolumeInfo(
     val title: String?,
     val authors: List<String>?,
     val pageCount: Int?,
