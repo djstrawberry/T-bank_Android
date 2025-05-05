@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.databinding.FragmentLibraryBinding
-import com.google.android.material.internal.ViewUtils.showKeyboard
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -80,9 +79,10 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
                     MODE_GOOGLE_BOOKS -> {
                         currentMode = MODE_GOOGLE_BOOKS
                         adapter.updateItems(emptyList())
+                        binding.fab.visibility = View.GONE
                         binding.searchContainer.visibility = View.VISIBLE
                         binding.sortButtonsLayout.visibility = View.GONE
-                        binding.etAuthor.requestFocus()
+                        binding.recyclerView.visibility = View.GONE
                     }
                 }
             }
@@ -93,12 +93,8 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
 
         })
 
-        binding.etAuthor.setOnClickListener { showKeyboard() }
-        binding.etTitle.setOnClickListener { showKeyboard() }
-
         binding.btnSearch.setOnClickListener {
             searchGoogleBooks()
-            hideKeyboard()
         }
 
         val textWatcher = object : TextWatcher {
@@ -115,18 +111,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         binding.etTitle.addTextChangedListener(textWatcher)
     }
 
-    private fun showKeyboard() {
-        val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
-    }
-
-    private fun hideKeyboard() {
-        val view = activity?.currentFocus
-        view?.let {
-            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            inputMethodManager.hideSoftInputFromWindow(it.windowToken, 0)
-        }
-    }
 
     fun scrollToLastItem() {
         val lastPosition = adapter.itemCount - 1
