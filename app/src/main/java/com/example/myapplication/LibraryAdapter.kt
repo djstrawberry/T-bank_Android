@@ -14,6 +14,7 @@ class LibraryAdapter(private var items: List<LibraryItem>) :
     }
 
     var onItemClick: ((LibraryItem) -> Unit)? = null
+    var onItemLongClick: ((LibraryItem) -> Unit)? = null
 
     inner class LibraryViewHolder(private val binding: ItemLibraryBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -35,6 +36,11 @@ class LibraryAdapter(private var items: List<LibraryItem>) :
 
                 itemView.setOnClickListener {
                     onItemClick?.invoke(item)
+                }
+
+                itemView.setOnLongClickListener {
+                    onItemLongClick?.invoke(item)
+                    true
                 }
             }
         }
