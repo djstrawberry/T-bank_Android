@@ -118,6 +118,13 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
         binding.itemName.setText(item.name)
         binding.itemName.isEnabled = false
 
+        binding.itemIcon.setImageResource(when(item) {
+            is Book -> R.drawable.ic_book
+            is Newspaper -> R.drawable.ic_newspaper
+            is Disk -> R.drawable.ic_disk
+            else -> R.drawable.ic_default
+        })
+
         when (item) {
             is Book -> showBook(item)
             is Newspaper -> showNewspaper(item)
@@ -169,6 +176,13 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
         binding.formContainer.visibility = View.VISIBLE
         binding.itemName.setText("")
         binding.itemName.isEnabled = true
+
+        binding.itemIcon.setImageResource(when(selectedType) {
+            "Book" -> R.drawable.ic_book
+            "Newspaper" -> R.drawable.ic_newspaper
+            "Disk" -> R.drawable.ic_disk
+            else -> R.drawable.ic_default
+        })
 
         when (selectedType) {
             "Book" -> createBook()

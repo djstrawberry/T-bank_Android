@@ -14,7 +14,7 @@ import com.example.myapplication.domain.usecases.SearchBooksUseCase
 class MyApplication : Application() {
     private lateinit var db: DatabaseLibrary
     lateinit var libraryRepository: LibraryRepository
-    private lateinit var googleBooksRepository: GoogleBooksRepository
+    lateinit var googleBooksRepository: GoogleBooksRepository
 
     lateinit var getLibraryItemsUseCase: GetLibraryItemsUseCase
     lateinit var addItemUseCase: AddItemUseCase
