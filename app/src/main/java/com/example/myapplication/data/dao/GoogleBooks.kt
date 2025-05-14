@@ -1,4 +1,6 @@
-package com.example.myapplication
+package com.example.myapplication.data.dao
+
+import com.example.myapplication.domain.models.Book
 
 data class GoogleBooksResponse (
     val items: List<ReceivedBook>?

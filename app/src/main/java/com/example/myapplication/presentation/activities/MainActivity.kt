@@ -1,12 +1,24 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.activities
 
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplication.data.dao.GetDb
+import com.example.myapplication.presentation.fragments.ItemFragment
+import com.example.myapplication.presentation.fragments.LibraryFragment
+import com.example.myapplication.R
 import com.example.myapplication.databinding.ActivityMainBinding
+import com.example.myapplication.domain.repositories.LibraryRepository
+import com.example.myapplication.domain.usecases.AddItemUseCase
+import com.example.myapplication.domain.usecases.GetLibraryItemsUseCase
+import com.example.myapplication.presentation.MyApplication
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var getLibraryItemsUseCase: GetLibraryItemsUseCase
+    private lateinit var addItemUseCase: AddItemUseCase
+
     private lateinit var binding: ActivityMainBinding
     var isLandscape: Boolean = false
     private var currentItemId: Int = -1
@@ -16,11 +28,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val app = application as MyApplication
+        getLibraryItemsUseCase = app.getLibraryItemsUseCase
+        addItemUseCase = app.addItemUseCase
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val db = GetDb.getDatabase(this)
-        repository = LibraryRepository(db)
 
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -47,12 +63,22 @@ class MainActivity : AppCompatActivity() {
     private fun showDetailFragment() {
         if (isCreatingNewItem) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view2, ItemFragment.newInstance(true, repository = repository))
+                .replace(
+                    R.id.fragment_container_view2,
+                    ItemFragment.newInstance(true, repository = repository)
+                )
                 .commit()
         } else {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container_view2,
-                    ItemFragment.newInstance(false, currentItemId, currentItemType, repository = repository))
+                .replace(
+                    R.id.fragment_container_view2,
+                    ItemFragment.newInstance(
+                        false,
+                        currentItemId,
+                        currentItemType,
+                        repository = repository
+                    )
+                )
                 .commit()
         }
         binding.fragmentContainerView2.visibility = View.VISIBLE
@@ -89,11 +115,10 @@ class MainActivity : AppCompatActivity() {
         currentItemType = ""
         isCreatingNewItem = true
 
+        val app = application as MyApplication
         val fragment = ItemFragment.newInstance(
             isEditMode = true,
-            itemId = -1,
-            itemType = "",
-            repository = repository
+            repository = app.libraryRepository
         )
 
         if (isLandscape) {
@@ -123,7 +148,7 @@ class MainActivity : AppCompatActivity() {
         outState.putBoolean("isCreatingNewItem", isCreatingNewItem)
     }
 
-    fun clearDetailFragment() {
+    private fun clearDetailFragment() {
         val existingFragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view2)
         if (existingFragment != null) {
             supportFragmentManager.beginTransaction()
@@ -140,8 +165,7 @@ class MainActivity : AppCompatActivity() {
             if (supportFragmentManager.backStackEntryCount > 0) {
                 supportFragmentManager.popBackStack()
             } else {
-                super.onBackPressed() // если честно я не поняла как это заменить, и обязательно ли это,
-                // если оно deprecated?
+                super.onBackPressed()
             }
         }
     }

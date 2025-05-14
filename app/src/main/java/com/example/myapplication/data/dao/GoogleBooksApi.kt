@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.data.dao
 
 import retrofit2.Response
 import retrofit2.http.GET

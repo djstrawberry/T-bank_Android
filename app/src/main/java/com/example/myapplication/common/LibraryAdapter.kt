@@ -1,9 +1,14 @@
-package com.example.myapplication
+package com.example.myapplication.common
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.R
 import com.example.myapplication.databinding.ItemLibraryBinding
+import com.example.myapplication.domain.models.Book
+import com.example.myapplication.domain.models.Disk
+import com.example.myapplication.domain.models.LibraryItem
+import com.example.myapplication.domain.models.Newspaper
 
 class LibraryAdapter(private var items: List<LibraryItem>) :
     RecyclerView.Adapter<LibraryAdapter.LibraryViewHolder>() {

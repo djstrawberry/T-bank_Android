@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:baselineAligned="false"
-    tools:context=".MainActivity"
+    tools:context=".presentation.activities.MainActivity"
     android:weightSum="2">
 
     <androidx.fragment.app.FragmentContainerView

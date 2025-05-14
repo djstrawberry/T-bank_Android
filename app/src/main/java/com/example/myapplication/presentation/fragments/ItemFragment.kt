@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -6,11 +6,16 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentItemBinding
+import com.example.myapplication.domain.models.Book
+import com.example.myapplication.domain.models.Disk
+import com.example.myapplication.domain.models.LibraryItem
+import com.example.myapplication.domain.models.Newspaper
+import com.example.myapplication.domain.repositories.LibraryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Date
 
 class ItemFragment : Fragment(R.layout.fragment_item) {
     private var _binding: FragmentItemBinding? = null
@@ -260,6 +265,40 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
             isAvailable = true,
             pages = pages,
             author = author
+        )
+    }
+
+    private suspend fun createNewspaperItem(name: String): Newspaper? {
+        val month = binding.field1.text.toString().trim()
+        val issueNumber = binding.field2.text.toString().toIntOrNull() ?: 0
+
+        if (month.isEmpty() || issueNumber <= 0) {
+            showError("Заполните все поля корректно")
+            return null
+        }
+
+        return Newspaper(
+            id = repository.getNextAvailableId(),
+            name = name,
+            isAvailable = true,
+            month = month,
+            issueNumber = issueNumber
+        )
+    }
+
+    private suspend fun createDiskItem(name: String): Disk? {
+        val type = binding.field1.text.toString().trim()
+
+        if (type.isEmpty()) {
+            showError("Укажите тип диска")
+            return null
+        }
+
+        return Disk(
+            id = repository.getNextAvailableId(),
+            name = name,
+            isAvailable = true,
+            type = type
         )
     }
 

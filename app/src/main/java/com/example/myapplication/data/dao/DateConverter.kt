@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.data.dao
 
 import androidx.room.TypeConverter
 import java.util.Date
