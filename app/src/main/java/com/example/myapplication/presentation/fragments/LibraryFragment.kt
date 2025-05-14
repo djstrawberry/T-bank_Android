@@ -29,7 +29,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     private lateinit var libraryRepository: LibraryRepository
     private lateinit var googleBooksRepository: GoogleBooksRepository
 
-    // Режимы работы: 0 = Библиотека, 1 = Google Books
     private companion object {
         const val MODE_LIBRARY = 0
         const val MODE_GOOGLE_BOOKS = 1
@@ -45,23 +44,20 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         params.topToBottom = R.id.sortButtonsLayout
         binding.recyclerView.layoutParams = params
 
-        // Получаем репозитории из Application
         val app = requireActivity().application as MyApplication
         libraryRepository = app.libraryRepository
         googleBooksRepository = app.googleBooksRepository
 
-        setupRecyclerView() // Настраиваем список
-        setupSortingButtons() // Кнопки сортировки
-        setupModeSwitcher() // Вкладки переключения режимов
-        loadItems() // Загружаем данные
+        setupRecyclerView()
+        setupSortingButtons()
+        setupModeSwitcher()
+        loadItems()
 
-        // Кнопка добавления нового элемента
         binding.fab.setOnClickListener {
             (activity as? MainActivity)?.showCreateItem()
         }
     }
 
-    // Настройка вкладок (табов)
     private fun setupModeSwitcher() {
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Библиотека"))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Google Books"))
@@ -74,30 +70,29 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
             }
         }
 
-        // Обработчик переключения вкладок
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 when(tab?.position) {
-                    MODE_LIBRARY -> { // Режим "Библиотека"
+                    MODE_LIBRARY -> {
                         currentMode = MODE_LIBRARY
                         val params = binding.recyclerView.layoutParams as ConstraintLayout.LayoutParams
                         params.topToBottom = R.id.sortButtonsLayout
                         binding.recyclerView.layoutParams = params
                         loadItems()
-                        binding.searchContainer.visibility = View.GONE // Скрываем поиск
-                        binding.sortButtonsLayout.visibility = View.VISIBLE // Показываем сортировку
-                        binding.fab.visibility = View.VISIBLE // Показываем кнопку добавления
+                        binding.searchContainer.visibility = View.GONE
+                        binding.sortButtonsLayout.visibility = View.VISIBLE
+                        binding.fab.visibility = View.VISIBLE
                     }
-                    MODE_GOOGLE_BOOKS -> { // Режим "Google Books"
+                    MODE_GOOGLE_BOOKS -> {
                         currentMode = MODE_GOOGLE_BOOKS
                         val params = binding.recyclerView.layoutParams as ConstraintLayout.LayoutParams
                         params.topToBottom = R.id.searchContainer
                         binding.recyclerView.layoutParams = params
                         adapter.updateItems(emptyList())
                         updateSearchButtonState()
-                        binding.searchContainer.visibility = View.VISIBLE // Показываем поиск
-                        binding.sortButtonsLayout.visibility = View.GONE // Скрываем сортировку
-                        binding.fab.visibility = View.GONE // Скрываем кнопку добавления
+                        binding.searchContainer.visibility = View.VISIBLE
+                        binding.sortButtonsLayout.visibility = View.GONE
+                        binding.fab.visibility = View.GONE
                     }
                 }
             }
@@ -105,7 +100,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
-        // Кнопка поиска в Google Books
         binding.btnSearch.setOnClickListener {
             if (binding.btnSearch.isEnabled) {
                 searchGoogleBooks()
@@ -117,12 +111,10 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         val authorText = binding.etAuthor.text?.toString()?.trim()
         val titleText = binding.etTitle.text?.toString()?.trim()
 
-        // Кнопка активна, если хотя бы одно поле содержит 3 или более символа
         binding.btnSearch.isEnabled = !authorText.isNullOrEmpty() && authorText.length >= 3 ||
                 !titleText.isNullOrEmpty() && titleText.length >= 3
     }
 
-    // Поиск книг в Google Books
     private fun searchGoogleBooks() {
         lifecycleScope.launch {
             try {
@@ -147,16 +139,13 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
     }
 
-    // Настройка списка (RecyclerView)
     private fun setupRecyclerView() {
         adapter = LibraryAdapter(emptyList()).apply {
-            // Клик по элементу
             onItemClick = { item ->
                 if (currentMode == MODE_LIBRARY) {
                     (activity as? MainActivity)?.showItemDetails(item.id, item::class.simpleName ?: "")
                 }
             }
-            // Долгий клик (для сохранения из Google Books в библиотеку)
             onItemLongClick = { item ->
                 if (currentMode == MODE_GOOGLE_BOOKS) {
                     saveBookToLibrary(item)
@@ -170,7 +159,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
     }
 
-    // Сохранение книги из Google Books в локальную библиотеку
     private fun saveBookToLibrary(item: LibraryItem) {
         lifecycleScope.launch {
             try {
@@ -189,9 +177,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
     }
 
-    // Настройка кнопок сортировки
     private fun setupSortingButtons() {
-        // Сортировка по имени
         binding.sortByName.setOnClickListener {
             lifecycleScope.launch {
                 libraryRepository.setSortOrder(LibraryRepository.SortOrder.BY_NAME)
@@ -199,7 +185,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
             }
         }
 
-        // Сортировка по дате
         binding.sortByDate.setOnClickListener {
             lifecycleScope.launch {
                 libraryRepository.setSortOrder(LibraryRepository.SortOrder.BY_DATE)
@@ -208,7 +193,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
     }
 
-    // Загрузка элементов
     private fun loadItems() {
         lifecycleScope.launch {
             if (currentMode == MODE_LIBRARY) {
