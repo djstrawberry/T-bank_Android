@@ -30,6 +30,10 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
 
         setupRecyclerView()
         loadItems()
+
+        binding.fab.setOnClickListener {
+            (activity as? MainActivity)?.showCreateItem()
+        }
     }
 
     private fun setupRecyclerView() {

@@ -224,8 +224,7 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
     }
 
     private fun createNewItem(): Boolean {
-        val name = binding.itemName.text.toString().trim()
-        if (name.isEmpty()) {
+        val name = binding.itemName.text?.toString()?.trim() ?: run {
             showError("Введите название")
             return false
         }
@@ -237,16 +236,21 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
                     "Newspaper" -> createNewspaperItem(name)
                     "Disk" -> createDiskItem(name)
                     else -> null
+                } ?: return@launch
+
+                val result = withContext(Dispatchers.IO) {
+                    repository.addItem(newItem)
                 }
 
-                newItem?.let {
-                    val result = withContext(Dispatchers.IO) {
-                        repository.addItem(it)
+                if (isAdded) {
+                    if (result.isSuccess) {
+                        requireActivity().onBackPressed()
+                    } else {
+                        showError("Ошибка сохранения: ${result.exceptionOrNull()?.message}")
                     }
-                    handleSaveResult(result)
                 }
             } catch (e: Exception) {
-                showError("Ошибка: ${e.message}")
+                if (isAdded) showError("Ошибка: ${e.message}")
             }
         }
         return true
@@ -312,10 +316,12 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
     }
 
     private fun showError(message: String) {
+        if (!isAdded || context == null) return
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
     private fun showMessage(message: String) {
+        if (!isAdded || context == null) return
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 

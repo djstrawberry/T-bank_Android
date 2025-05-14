@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var addItemUseCase: AddItemUseCase
 
     private lateinit var binding: ActivityMainBinding
-    var isLandscape: Boolean = false
+    private var isLandscape: Boolean = false
     private var currentItemId: Int = -1
     private var currentItemType: String = ""
     private var isCreatingNewItem: Boolean = false
@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val app = application as MyApplication
+        repository = (application as MyApplication).libraryRepository
         getLibraryItemsUseCase = app.getLibraryItemsUseCase
         addItemUseCase = app.addItemUseCase
 
