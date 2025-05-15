@@ -18,6 +18,7 @@ import com.example.myapplication.domain.repositories.LibraryRepository
 import com.example.myapplication.presentation.MyApplication
 import com.example.myapplication.presentation.activities.MainActivity
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +29,14 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     private lateinit var adapter: LibraryAdapter
     private lateinit var libraryRepository: LibraryRepository
     private lateinit var googleBooksRepository: GoogleBooksRepository
+
+    private val authorEditText: TextInputEditText by lazy {
+        binding.etAuthor.findViewById(R.id.etAuthor)
+    }
+
+    private val titleEditText: TextInputEditText by lazy {
+        binding.etTitle.findViewById(R.id.etTitle)
+    }
 
     private companion object {
         const val MODE_LIBRARY = 0
@@ -56,19 +65,25 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         binding.fab.setOnClickListener {
             (activity as? MainActivity)?.showCreateItem()
         }
+
+        val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                binding.btnSearch.isEnabled =
+                    binding.etAuthor.text?.length!! >= 3 ||
+                            binding.etTitle.text?.length!! >= 3
+            }
+        }
+
+        binding.etAuthor.addTextChangedListener(textWatcher)
+        binding.etTitle.addTextChangedListener(textWatcher)
     }
 
     private fun setupModeSwitcher() {
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Библиотека"))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Google Books"))
 
-        val textWatcher = object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                updateSearchButtonState()
-            }
-        }
 
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -100,6 +115,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
+        updateSearchButtonState()
         binding.btnSearch.setOnClickListener {
             if (binding.btnSearch.isEnabled) {
                 searchGoogleBooks()
@@ -108,8 +124,8 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     }
 
     private fun updateSearchButtonState() {
-        val authorText = binding.etAuthor.text?.toString()?.trim()
-        val titleText = binding.etTitle.text?.toString()?.trim()
+        val authorText = authorEditText.text?.toString()?.trim()
+        val titleText = titleEditText.text?.toString()?.trim()
 
         binding.btnSearch.isEnabled = !authorText.isNullOrEmpty() && authorText.length >= 3 ||
                 !titleText.isNullOrEmpty() && titleText.length >= 3
@@ -119,8 +135,11 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         lifecycleScope.launch {
             try {
                 binding.progressBar.visibility = View.VISIBLE
-                val author = binding.etAuthor.text?.toString()?.takeIf { it.isNotBlank() }
-                val title = binding.etTitle.text?.toString()?.takeIf { it.isNotBlank() }
+
+                adapter.updateItems(emptyList())
+
+                val author = authorEditText.text?.toString()?.takeIf { it.isNotBlank() }
+                val title = titleEditText.text?.toString()?.takeIf { it.isNotBlank() }
 
                 val books = withContext(Dispatchers.IO) {
                     googleBooksRepository.searchBooks(author, title)
