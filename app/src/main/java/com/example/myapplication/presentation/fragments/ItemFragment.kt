@@ -36,7 +36,6 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
             isEditMode: Boolean = false,
             itemId: Int = -1,
             itemType: String = "",
-            repository: LibraryRepository
         ): ItemFragment {
             return ItemFragment().apply {
                 arguments = Bundle().apply {
@@ -44,7 +43,6 @@ class ItemFragment : Fragment(R.layout.fragment_item) {
                     putInt(ARG_ITEM_ID, itemId)
                     putString(ARG_ITEM_TYPE, itemType)
                 }
-                this.repository = repository
             }
         }
     }

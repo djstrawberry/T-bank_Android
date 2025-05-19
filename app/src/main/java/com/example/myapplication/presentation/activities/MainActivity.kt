@@ -13,31 +13,29 @@ import com.example.myapplication.domain.repositories.LibraryRepository
 import com.example.myapplication.domain.usecases.AddItemUseCase
 import com.example.myapplication.domain.usecases.GetLibraryItemsUseCase
 import com.example.myapplication.presentation.MyApplication
+import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var getLibraryItemsUseCase: GetLibraryItemsUseCase
-    private lateinit var addItemUseCase: AddItemUseCase
+    @Inject lateinit var getLibraryItemsUseCase: GetLibraryItemsUseCase
+    @Inject lateinit var addItemUseCase: AddItemUseCase
+    @Inject
+    lateinit var repository: LibraryRepository
 
     private lateinit var binding: ActivityMainBinding
     private var isLandscape: Boolean = false
     private var currentItemId: Int = -1
     private var currentItemType: String = ""
     private var isCreatingNewItem: Boolean = false
-    private lateinit var repository: LibraryRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        (application as MyApplication).appComponent.inject(this)
         super.onCreate(savedInstanceState)
 
         val app = application as MyApplication
-        repository = (application as MyApplication).libraryRepository
-        getLibraryItemsUseCase = app.getLibraryItemsUseCase
-        addItemUseCase = app.addItemUseCase
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val db = GetDb.getDatabase(this)
 
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -66,7 +64,7 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.beginTransaction()
                 .replace(
                     R.id.fragment_container_view2,
-                    ItemFragment.newInstance(true, repository = repository)
+                    ItemFragment.newInstance(true)
                 )
                 .commit()
         } else {
@@ -77,7 +75,6 @@ class MainActivity : AppCompatActivity() {
                         false,
                         currentItemId,
                         currentItemType,
-                        repository = repository
                     )
                 )
                 .commit()
@@ -95,7 +92,6 @@ class MainActivity : AppCompatActivity() {
             isEditMode = false,
             itemId = itemId,
             itemType = itemType,
-            repository = repository
         )
 
         if (isLandscape) {
@@ -116,11 +112,7 @@ class MainActivity : AppCompatActivity() {
         currentItemType = ""
         isCreatingNewItem = true
 
-        val app = application as MyApplication
-        val fragment = ItemFragment.newInstance(
-            isEditMode = true,
-            repository = app.libraryRepository
-        )
+        val fragment = ItemFragment.newInstance(isEditMode = true)
 
         if (isLandscape) {
             supportFragmentManager.beginTransaction()
