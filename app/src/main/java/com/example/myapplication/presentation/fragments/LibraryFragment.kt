@@ -1,5 +1,6 @@
 package com.example.myapplication.presentation.fragments
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -22,13 +23,17 @@ import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 class LibraryFragment : Fragment(R.layout.fragment_library) {
+
+    @Inject lateinit var libraryRepository: LibraryRepository
+    @Inject
+    lateinit var googleBooksRepository: GoogleBooksRepository
+
     private var _binding: FragmentLibraryBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: LibraryAdapter
-    private lateinit var libraryRepository: LibraryRepository
-    private lateinit var googleBooksRepository: GoogleBooksRepository
 
     private val authorEditText: TextInputEditText by lazy {
         binding.etAuthor.findViewById(R.id.etAuthor)
@@ -53,10 +58,6 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         params.topToBottom = R.id.sortButtonsLayout
         binding.recyclerView.layoutParams = params
 
-        val app = requireActivity().application as MyApplication
-        libraryRepository = app.libraryRepository
-        googleBooksRepository = app.googleBooksRepository
-
         setupRecyclerView()
         setupSortingButtons()
         setupModeSwitcher()
@@ -78,6 +79,11 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
 
         binding.etAuthor.addTextChangedListener(textWatcher)
         binding.etTitle.addTextChangedListener(textWatcher)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        (requireActivity().application as MyApplication).appComponent.inject(this)
     }
 
     private fun setupModeSwitcher() {
