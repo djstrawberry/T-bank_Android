@@ -1,8 +1,8 @@
-package com.example.myapplication
+package com.example.myapplication.data.dao
 
 import android.content.Context
 import androidx.room.Room
-import com.example.myapplication.DatabaseLibrary.Companion.DATABASE_NAME
+import com.example.myapplication.data.dao.DatabaseLibrary.Companion.DATABASE_NAME
 
 class GetDb {
     companion object {
