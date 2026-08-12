@@ -18,9 +18,10 @@ import com.example.myapplication.data.dao.NewspaperDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Date
+import javax.inject.Inject
 import kotlin.random.Random
 
-class LibraryRepositoryImpl(
+class LibraryRepositoryImpl @Inject constructor(
     private val db: DatabaseLibrary
 ) : LibraryRepository {
 
